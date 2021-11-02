@@ -1,0 +1,51 @@
+import sys
+from awsglue.transforms import *
+from awsglue.utils import getResolvedOptions
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.job import Job
+
+args = getResolvedOptions(sys.argv, ["JOB_NAME","INPUT_DATA_PATH","OUTPUT_DATA_PATH"])
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args["JOB_NAME"], args)
+
+input_data = args["INPUT_DATA_PATH"]
+output_data = args["OUTPUT_DATA_PATH"]
+
+print(input_data)
+print(output_data)
+# Script generated for node S3 bucket
+S3bucket_node1 = glueContext.create_dynamic_frame.from_options(
+    format_options={},
+    connection_type="s3",
+    format="parquet",
+    connection_options={
+        "paths": [input_data],
+        "recurse": True,
+    },
+    transformation_ctx="S3bucket_node1",
+)
+
+
+# Script generated for node S3 bucket
+S3bucket_node3 = glueContext.getSink(
+    path=output_data,
+    connection_type="s3",
+    updateBehavior="UPDATE_IN_DATABASE",
+    compression="snappy",
+    enableUpdateCatalog=True,
+    transformation_ctx="S3bucket_node3",
+)
+
+S3bucket_node3.setCatalogInfo(
+    catalogDatabase="db1", catalogTableName="parquet_job_parquet"
+)
+
+S3bucket_node3.setFormat("glueparquet")
+
+S3bucket_node3.writeFrame(S3bucket_node1)
+
+job.commit()
