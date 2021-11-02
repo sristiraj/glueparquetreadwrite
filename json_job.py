@@ -1,0 +1,51 @@
+import sys
+from awsglue.transforms import *
+from awsglue.utils import getResolvedOptions
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.job import Job
+
+args = getResolvedOptions(sys.argv, ["JOB_NAME","INPUT_DATA_PATH","OUTPUT_DATA_PATH","GLUE_DB_NAME","GLUE_TABLE_NAME"])
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args["JOB_NAME"], args)
+
+
+input_data = args["INPUT_DATA_PATH"]
+output_data = args["OUTPUT_DATA_PATH"]
+glue_db = args["GLUE_DB_NAME"]
+glue_table = args["GLUE_TABLE_NAME"]
+
+
+# Script generated for node S3 bucket
+S3bucket_node1 = glueContext.create_dynamic_frame.from_options(
+    format_options={"multiline": False},
+    connection_type="s3",
+    format="json",
+    connection_options={
+        "paths": [input_data],
+        "recurse": True,
+    },
+    transformation_ctx="S3bucket_node1",
+)
+
+dfc = S3bucket_node1.relationalize(glue_table, input_data+"tmp/")
+
+# Script generated for node S3 bucket
+S3bucket_node3 = glueContext.write_dynamic_frame.from_options(
+    frame=dfc,
+    connection_type="s3",
+    format="glueparquet",
+    connection_options={
+        "path": output_data,
+        "partitionKeys": [],
+    },
+    format_options={"compression": "snappy"},
+    transformation_ctx="S3bucket_node3",
+)
+
+
+
+job.commit()
