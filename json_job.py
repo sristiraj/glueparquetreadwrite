@@ -4,6 +4,10 @@ from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.job import Job
+from awsglue.transforms import UnnestFrame
+from pprint import pprint
+from awsglue.dynamicframe import DynamicFrame
+
 
 args = getResolvedOptions(sys.argv, ["JOB_NAME","INPUT_DATA_PATH","OUTPUT_DATA_PATH","GLUE_DB_NAME","GLUE_TABLE_NAME"])
 sc = SparkContext()
@@ -19,32 +23,23 @@ glue_db = args["GLUE_DB_NAME"]
 glue_table = args["GLUE_TABLE_NAME"]
 
 
-# Script generated for node S3 bucket
-S3bucket_node1 = glueContext.create_dynamic_frame.from_options(
-    format_options={"multiline": False},
-    connection_type="s3",
-    format="json",
-    connection_options={
-        "paths": [input_data],
-        "recurse": True,
-    },
-    transformation_ctx="S3bucket_node1",
-)
+df = spark.read.option("multiline","true").json(input_data)
+S3bucket_node1 = DynamicFrame.fromDF(df, glueContext, "S3bucket_node1")
 
-dfc = S3bucket_node1.relationalize(glue_table, input_data+"tmp/")
 
-# Script generated for node S3 bucket
-S3bucket_node3 = glueContext.write_dynamic_frame.from_options(
-    frame=dfc,
-    connection_type="s3",
-    format="glueparquet",
-    connection_options={
-        "path": output_data,
-        "partitionKeys": [],
-    },
-    format_options={"compression": "snappy"},
-    transformation_ctx="S3bucket_node3",
-)
+dfun = UnnestFrame.apply(frame = S3bucket_node1) 
+odf = dfun.toDF()
+new_col = []
+
+for col in odf.columns:
+    new_col.append(col.replace(".","_") )   
+
+print(new_col)
+odf = odf.toDF(*new_col)
+
+odf.write.format("parquet").mode("overwrite").option("path",output_data).saveAsTable(glue_db+"."+glue_table)
+
+
 
 
 
