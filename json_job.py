@@ -32,7 +32,7 @@ odf = dfun.toDF()
 new_col = []
 
 for col in odf.columns:
-    new_col.append(col.replace(".","_") )   
+    new_col.append(col.replace(".","_").replace("@","_"))   
 
 print(new_col)
 odf = odf.toDF(*new_col)
