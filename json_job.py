@@ -1,3 +1,4 @@
+#Unnest json and create flattened data
 import sys
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
