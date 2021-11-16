@@ -41,13 +41,13 @@ dfc = Relationalize.apply(frame = datasource0, staging_path = glue_temp_storage,
 print("relationalized")
 print(dfc.keys())
 for key in dfc.keys():
-    modified_key = key.replace(".","_")
+    modified_key = key.replace(".","_").replace("@","_")
     obj = dfc.select(key)
     odf = obj.toDF()
     new_col = []
     print(odf.columns)
     for col in odf.columns:
-        new_col.append(col.replace(".","_") )   
+        new_col.append(col.replace(".","_").replace("@","_") )   
 
     odf = odf.toDF(*new_col)
     print(odf.columns)
